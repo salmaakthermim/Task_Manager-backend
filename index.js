@@ -3,10 +3,15 @@ const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 const cors = require('cors');
 require('dotenv').config();
 
-const app = express();
-const port = process.env.PORT || 5000;
+// ── Vercel serverless + local dev compatible ──
 
-app.use(cors());
+const app = express();
+
+app.use(cors({
+  origin: '*',
+  methods: ['GET', 'POST', 'PATCH', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type'],
+}));
 app.use(express.json());
 
 const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASS}@cluster0.z4bua.mongodb.net/?appName=Cluster0`;
@@ -116,10 +121,18 @@ async function run() {
     });
 
     app.get('/', (req, res) => res.send('Task Manager API is running'));
-    app.listen(port, () => console.log(`Server running on port ${port}`));
+
+    // local dev only
+    if (process.env.NODE_ENV !== 'production') {
+      const port = process.env.PORT || 5000;
+      app.listen(port, () => console.log(`Server running on port ${port}`));
+    }
   } catch (err) {
     console.error('Failed to connect to MongoDB', err);
   }
 }
 
 run().catch(console.dir);
+
+// Export for Vercel serverless
+module.exports = app;
